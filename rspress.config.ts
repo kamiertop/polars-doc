@@ -4,7 +4,9 @@ import { defineConfig } from 'rspress/config';
 export default defineConfig({
   root: path.join(__dirname, 'docs'),
   title: 'Polars中文指南',
+  description:"polars-python中文指南",
   icon: './docs/public/polars.svg',
+  logoText:"Polars",
   logo: {
     light: '/polars.svg',
     dark: '/polars.svg',
@@ -14,7 +16,7 @@ export default defineConfig({
       {
         icon: 'github',
         mode: 'link',
-        content: 'https://github.com/web-infra-dev/rspress',
+        content: 'https://github.com/kamiertop/polars-doc',
       }
     ],
     outlineTitle: '目录',
@@ -22,5 +24,14 @@ export default defineConfig({
     nextPageText: '下一页',
     enableContentAnimation: true,
     enableAppearanceAnimation: true,
+    outline: true,
+    lastUpdated: true,
+    editLink: {
+      text:"📝在 GitHub 上编辑此页",
+      docRepoBaseUrl: "https://github.com/kamiertop/polars-doc",
+    },
   },
+  search: {
+    codeBlocks: true,
+  }
 });
