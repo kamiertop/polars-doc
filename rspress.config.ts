@@ -6,7 +6,7 @@ export default defineConfig({
   title: 'Polars中文指南',
   description:"polars-python中文指南",
   icon: './docs/public/polars.svg',
-  logoText:"Polars",
+  logoText:"Polars中文指南",
   logo: {
     light: '/polars.svg',
     dark: '/polars.svg',
@@ -26,10 +26,11 @@ export default defineConfig({
     enableAppearanceAnimation: true,
     outline: true,
     lastUpdated: true,
-    editLink: {
-      text:"📝在 GitHub 上编辑此页",
-      docRepoBaseUrl: "https://github.com/kamiertop/polars-doc",
-    },
+    lastUpdatedText: "上次更新时间",
+    // editLink: {
+    //   text:"📝在 GitHub 上编辑此页",
+    //   docRepoBaseUrl: "https://github.com/kamiertop/polars-doc",
+    // },
   },
   search: {
     codeBlocks: true,
