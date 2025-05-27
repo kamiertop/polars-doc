@@ -1,0 +1,21 @@
+import Link from "../../components/Link";
+
+# 数据类型
+
+`Polars`支持多种数据类型, 大致分为以下几类
+> `import polars as pl`
+- 数值数据类型: 有符号整数, 无符号整数, 浮点数和小数
+    - `pl.Int8`, `pl.Int16`, `pl.Int32`, `pl.Int64`,
+    - `pl.UInt8`, `pl.UInt16`, `pl.UInt32`, `pl.UInt64`
+    - `pl.Float32`, `pl.Float64`
+- 嵌套数据类型: 列表, 结构和数组: `pl.List` `pl.Struct` `pl.Array`
+- Temporal: `pl.Date`, `pl.Datetime`, `pl.Time`, `pl.Duration`
+- 其他: 字符串, 二进制数据, 布尔值, 枚举, 对象: `pl.String`, `pl.Binary`, `pl.Boolean`, `pl.Enum`, `pl.Object`
+
+所有类型都支持由特殊值 `null` 表示的缺失值, 不能与`NaN`混淆
+
+
+<Link
+    href="https://docs.pola.rs/user-guide/concepts/data-types-and-structures/#appendix-full-data-types-table"
+    description="参看数据类型完整列表及说明"
+/>

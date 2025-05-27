@@ -8,6 +8,11 @@
     "type": "file",
     "name": "dataframe.mdx",
     "label": "DataFrame"
+  },
+  {
+    "type": "dir",
+    "name": "concepts",
+    "label": "一些概念"
   }
 ]
 
