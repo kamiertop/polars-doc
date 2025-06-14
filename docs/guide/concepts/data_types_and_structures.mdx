@@ -5,9 +5,9 @@ import Link from "../../components/Link";
 `Polars`支持多种数据类型, 大致分为以下几类
 > `import polars as pl`
 - 数值数据类型: 有符号整数, 无符号整数, 浮点数和小数
-    - `pl.Int8`, `pl.Int16`, `pl.Int32`, `pl.Int64`,
-    - `pl.UInt8`, `pl.UInt16`, `pl.UInt32`, `pl.UInt64`
-    - `pl.Float32`, `pl.Float64`
+- `pl.Int8`, `pl.Int16`, `pl.Int32`, `pl.Int64`,
+- `pl.UInt8`, `pl.UInt16`, `pl.UInt32`, `pl.UInt64`
+- `pl.Float32`, `pl.Float64`
 - 嵌套数据类型: 列表, 结构和数组: `pl.List` `pl.Struct` `pl.Array`
 - Temporal: `pl.Date`, `pl.Datetime`, `pl.Time`, `pl.Duration`
 - 其他: 字符串, 二进制数据, 布尔值, 枚举, 对象: `pl.String`, `pl.Binary`, `pl.Boolean`, `pl.Enum`, `pl.Object`
@@ -15,6 +15,199 @@ import Link from "../../components/Link";
 所有类型都支持由特殊值 `null` 表示的缺失值, 不能与`NaN`混淆
 
 
+<Link
+    href="https://docs.pola.rs/user-guide/concepts/data-types-and-structures/#appendix-full-data-types-table"
+    description="参看数据类型完整列表及说明"
+/>
+
+-----------------
+
+:::tip
+**Polars提供两个核心的数据结构: `Series` 和 `DataFrame`**
+:::
+
+## Series
+> `Series`包含一列相同类型的数据, 下面展示其基础用法, 可以在`jupyter notebook`中运行
+
+### 属性
+> 更详细的信息可以阅读Polars文档, IDE中查看很方便
+
+- `name`: Series的名称
+- `values`: Series的值, 支持pandas的Series, polars的Series, numpy的ndarray等
+- `dtype`: Series中元素的数据类型.
+- `strict`: 如果为`True`(默认), 则推断的数据类型为第一个非`null`值.
+- `nan_to_null`: 如果使用`numpy`数组创建此系列, 请指示如何处理`np.nan`值. (此参数对非`numpy`数据无作用)
+
+
+```python
+import polars as pl
+
+# 可以指定类型, 默认是Int64
+print(pl.Series("series_name", [1, 2, 3], dtype=pl.UInt16))
+```
+
+```text
+shape: (3,)
+Series: 'series_name' [u16]
+[
+	1
+	2
+	3
+]
+```
+
+### 方法
+
+- `def head(self, n: int = 10) -> Series` :  返回Series的前n行
+- `def tail(self, n: int = 10) -> Series` :  返回Series的最后n行
+- `def rename(self, name: str) -> Series` :  重命名Series
+- sort
+  - descending – 按降序排序。
+  - nulls_last – 将 null 值放在最后而不是第一个
+  - multithreaded – 使用多个线程排序
+  - in_place – 就地排序
+
+```python
+def sort(self,
+     *,
+     descending: bool = False,
+     nulls_last: bool = False,
+     multithreaded: bool = True,
+     in_place: bool = False) -> Self
+```
+- `def arg_max(self) -> int | None` : 返回最大值的索引
+- `def arg_min(self) -> int | None` : 获取最小值的索引
+- `def max(self) -> int | float | Decimal | date | time | datetime | timedelta | str | bool | bytes | list | None` : 获取最大值
+- `def min(self) -> int | float | Decimal | date | time | datetime | timedelta | str | bool | bytes | list | None` : 获取最小值
+- `def abs(self) -> Series` : 每个元素的绝对值
+- ...
+## DataFrame
+> `DataFrame`是一个2维异构数据类型, 看成是一个表格, 要求每列名称唯一
+
+```python
+from datetime import date
+
+df = pl.DataFrame(
+    {
+        "name": ["Alice Archer", "Ben Brown", "Chloe Cooper", "Daniel Donovan"],
+        "birthdate": [
+            date(1997, 1, 10),
+            date(1985, 2, 15),
+            date(1983, 3, 22),
+            date(1981, 4, 30),
+        ],
+        "weight": [57.9, 72.5, 53.6, 83.1],  # (kg)
+        "height": [1.56, 1.77, 1.65, 1.75],  # (m)
+    }
+)
+
+print(df)
+```
+以下是结果, 输出结果中会打印两部分
+第一部分是DataFrame的元数据, 包含列名和数据类型(会自动推导)
+第二部分是DataFrame的数据(数据量过多会自动截断)
+```text
+shape: (4, 4)
+┌────────────────┬────────────┬────────┬────────┐
+│ name           ┆ birthdate  ┆ weight ┆ height │
+│ ---            ┆ ---        ┆ ---    ┆ ---    │
+│ str            ┆ date       ┆ f64    ┆ f64    │
+╞════════════════╪════════════╪════════╪════════╡
+│ Alice Archer   ┆ 1997-01-10 ┆ 57.9   ┆ 1.56   │
+│ Ben Brown      ┆ 1985-02-15 ┆ 72.5   ┆ 1.77   │
+│ Chloe Cooper   ┆ 1983-03-22 ┆ 53.6   ┆ 1.65   │
+│ Daniel Donovan ┆ 1981-04-30 ┆ 83.1   ┆ 1.75   │
+└────────────────┴────────────┴────────┴────────┘
+```
+
+### 方法
+- `def head(self, n: int = 5) -> DataFrame`:  返回DataFrame的前n行
+- `def tail(self, n: int = 5) -> DataFrame`:  返回DataFrame的最后n行
+-  从DataFrame中随机抽取一定数量的样本
+ ```python
+ # n: 返回的行数,不能和fraction一起使用
+ # fraction: 返回的行数比例,不能和n一起使用
+ # with_replacement: 是否允许重复抽取
+ # shuffle: 是否打乱采样后的顺序
+ # seed: 随机数种子, 用于结果可复现
+ def sample(
+     self,
+     n: int | Series | None = None,
+     *,
+     fraction: float | Series | None = None,
+     with_replacement: bool = False,
+     shuffle: bool = False,
+     seed: int | None = None,
+ ) -> DataFrame
+    ```
+- `df.schema` :  `Schema({'name': String, 'birthdate': Date, 'weight': Float64, 'height': Float64})`
+
+### `Schema`
+> 创建DataFrame时可以指定Schema, 描述每一列的数据类型
+
+#### 默认推导
+> `Polars`会默认推导每一列的数据类型
+```python
+df = pl.DataFrame(
+    {
+        "name": ["Alice", "Ben", "Chloe", "Daniel"],
+        "age": [27, 39, 41, 43],
+    }
+)
+df.schema
+```
+
+```python
+Schema([('name', String), ('age', Int64)])
+```
+#### 手动指定
+> 注意使用schema时如果不想指定某一列的数据类型, 可以使用None, 比如下面schema中`name`的值是`None`
+```python {6}
+df = pl.DataFrame(
+    {
+        "name": ["Alice", "Ben", "Chloe", "Daniel"],
+        "age": [27, 39, 41, 43],
+    },
+    schema={"name": None, "age": pl.UInt8},
+)
+df.schema
+```
+注意age的数据类型被指定为`UInt8`, 上面的例子中是Int64
+```python
+Schema([('name', String), ('age', UInt8)])
+```
+#### 覆盖默认推导的数据类型
+> 使用`schema`时, 可以覆盖默认推导的数据类型, 而不是指定所有(比如列比较多的时候)
+```python {6}
+df = pl.DataFrame(
+    {
+        "name": ["Alice", "Ben", "Chloe", "Daniel"],
+        "age": [27, 39, 41, 43],
+    },
+    schema_overrides={"age": pl.UInt8},
+)
+df.shcema
+```
+
+```python
+Schema({'name': String, 'age': UInt8})
+```
+
+## 数据类型的内部
+- Polars使用[Arrow Columnar Format](https://arrow.apache.org/docs/format/Columnar.html)进行数据丁香, 遵循此规范允许Polars与其他也使用Arrow规范的工具进行高效数据传输
+- Polars的大部分性能来自查询引擎, 查询计划优化和表达式的并行执行
+
+## 浮点数
+Polars 通常遵循 Float32 和 Float64 的 IEEE 754 浮点标准, 但有一些例外:
+- 任何 NaN 都等于任何其他 NaN，并且大于任何非 NaN 值
+- 不保证0或NaN符号上的任何特定行为
+
+:::NOTE
+我对NaN还没有更多的理解, 等待日后更新
+:::
+
+
+## 完整数据类型列表
 <Link
     href="https://docs.pola.rs/user-guide/concepts/data-types-and-structures/#appendix-full-data-types-table"
     description="参看数据类型完整列表及说明"
