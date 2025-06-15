@@ -4,7 +4,7 @@ pageType: home
 hero:
   name: Polars-Python中文指南
   text: 新时代的DataFrame
-  tagline: Polars是一个用于数据库的开源库
+  tagline: Polars是一个用于数据处理的开源库
   actions:
     - theme: brand
       text: 快速开始

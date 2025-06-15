@@ -1,0 +1,489 @@
+# 表达式和上下文
+
+Polars 开发了自己的领域特定语言(DSL)来转换数据. 该语言非常易于使用, 并允许进行复杂的查询, 同时保持人类可读性.
+表达式和上下文（将在此处介绍）对于实现这种可读性非常重要, 同时还允许`Polars`查询引擎优化您的查询以使其尽可能快地运行
+
+## 表达式
+
+> [!INFO]
+> 表达式返回一个值
+
+在Polars中,表达式是数据转换的惰性表示形式. 表达式是模块化且灵活的, 这意味着可以将它们用作构建块来构建更复杂的表达式.
+基本示例:
+
+```python
+import polars as pl
+pl.col("foo") + 1
+```
+
+`pl.col("foo")`是一个表达式, 表示列名为"foo"的这一列值, `+1` 表示列名为"foo"的这一列中的每个元素都加1
+
+## 上下文
+- Polars表达式需要一个上下文, 在其中执行它们以生成一个结果. 根据使用的上下文, 相同的Polars表达式可以产生不同的结果
+- 上下文决定了表达式的语义和行为, 决定了表达式在不同操作中如何被解释和执行
+- 表达式本身只是返回值, 不知道自己要干嘛, 只有放在某个上下文中时Polars才会知道怎么使用这个表达式的结果
+- 常见的上下文有:
+1. `select`
+2. `with_columns`
+3. `filter`
+4. `group_by`
+
+### 准备数据
+
+```python
+import polars as pl
+from datetime import date
+
+df = pl.DataFrame(
+    {
+        "name": ["Alice Archer", "Ben Brown", "Chloe Cooper", "Daniel Donovan"],
+        "birthdate": [
+            date(1997, 1, 10),
+            date(1985, 2, 15),
+            date(1983, 3, 22),
+            date(1981, 4, 30),
+        ],
+        "weight": [57.9, 72.5, 53.6, 83.1],  # (kg)
+        "height": [1.56, 1.77, 1.65, 1.75],  # (m)
+    }
+)
+
+print(df)
+```
+
+```python
+shape: (4, 4)
+┌────────────────┬────────────┬────────┬────────┐
+│ name           ┆ birthdate  ┆ weight ┆ height │
+│ ---            ┆ ---        ┆ ---    ┆ ---    │
+│ str            ┆ date       ┆ f64    ┆ f64    │
+╞════════════════╪════════════╪════════╪════════╡
+│ Alice Archer   ┆ 1997-01-10 ┆ 57.9   ┆ 1.56   │
+│ Ben Brown      ┆ 1985-02-15 ┆ 72.5   ┆ 1.77   │
+│ Chloe Cooper   ┆ 1983-03-22 ┆ 53.6   ┆ 1.65   │
+│ Daniel Donovan ┆ 1981-04-30 ┆ 83.1   ┆ 1.75   │
+└────────────────┴────────────┴────────┴────────┘
+```
+
+### select
+> 多种方式, 任君挑选
+select上下文中的表达式必须生成长度相同的序列, 或者使用标量, 标量可以广播(pl.col("weight")+1, +1 会被广播到这一列的所有值中)
+
+```python
+def select(self, *exprs: IntoExpr | Iterable[IntoExpr], **named_exprs: IntoExpr) -> DataFrame
+```
+
+`select`上下文将表达式应用于列, 表达式可以是: "聚合","列的组合","字面量"
+
+#### 选择一列
+
+- 直接使用字符串: `df.select("name")`
+- 使用列表: `df.select(["name"])`
+- 使用元组: `df.select(("name",))`
+- 使用`pl.col()`: `df.select(pl.col("name"))`
+
+```text
+shape: (4, 1)
+┌────────────────┐
+│ name           │
+│ ---            │
+│ str            │
+╞════════════════╡
+│ Alice Archer   │
+│ Ben Brown      │
+│ Chloe Cooper   │
+│ Daniel Donovan │
+└────────────────┘
+```
+
+#### 选择多列
+- 使用列表: `df.select(["name","weight"])`
+- 使用元组: `df.select(("name","weight"))`
+- 使用`pl.col(str)`: `df.select([pl.col("name"),pl.col("weight")])`
+- 使用`pl.col(str)`: `df.select(pl.col("name"),pl.col("weight"))`
+- 使用`pl.col(tuple)`: `df.select(pl.col("name","weight"))`
+- 使用`pl.col(list)`: `df.select(pl.col(["name","weight"]))`
+
+```text
+shape: (4, 2)
+┌────────────────┬────────┐
+│ name           ┆ weight │
+│ ---            ┆ ---    │
+│ str            ┆ f64    │
+╞════════════════╪════════╡
+│ Alice Archer   ┆ 57.9   │
+│ Ben Brown      ┆ 72.5   │
+│ Chloe Cooper   ┆ 53.6   │
+│ Daniel Donovan ┆ 83.1   │
+└────────────────┴────────┘
+```
+
+#### 选择列, 重命名
+> [!WARNING]
+> 下面的new_name不能使用""包裹, 这是Python的语法要求, 使用第一种方式请确保value必须是一列!
+
+- `df.select(new_name=pl.col("name"))`
+- `df.select(new_name="name")`
+- `df.select(pl.col("name").alias("new_name"))`
+```text
+shape: (4, 1)
+┌────────────────┐
+│ new_name       │
+│ ---            │
+│ str            │
+╞════════════════╡
+│ Alice Archer   │
+│ Ben Brown      │
+│ Chloe Cooper   │
+│ Daniel Donovan │
+└────────────────┘
+```
+
+#### 对列做运算
+> 使用pl.col()指定列, 然后对列做运算
+
+`df.select('weight', add_weight=pl.col("weight") + 1)`
+```text
+shape: (4, 2)
+┌────────┬────────────┐
+│ weight ┆ add_weight │
+│ ---    ┆ ---        │
+│ f64    ┆ f64        │
+╞════════╪════════════╡
+│ 57.9   ┆ 58.9       │
+│ 72.5   ┆ 73.5       │
+│ 53.6   ┆ 54.6       │
+│ 83.1   ┆ 84.1       │
+└────────┴────────────┘
+```
+``
+
+
+### with_columns
+**用来新增一列或多列**
+
+:::NOTE
+
+- with_columns与select非常相似, 主要区别在于: with_columns会返回一个**新的DataFrame**
+- with_columns中的表达式的长度必须和原始DataFrame的长度相同, 而select只需要多个表达式之间返回的长度相同即可
+- 如果新增的列和原来的列重名, 则会**覆盖**原来的列
+
+:::
+
+
+#### 新增一列
+
+`df.with_columns(height_cm=pl.col("height") *100)`
+```text
+shape: (4, 5)
+┌────────────────┬────────────┬────────┬────────┬───────────┐
+│ name           ┆ birthdate  ┆ weight ┆ height ┆ height_cm │
+│ ---            ┆ ---        ┆ ---    ┆ ---    ┆ ---       │
+│ str            ┆ date       ┆ f64    ┆ f64    ┆ f64       │
+╞════════════════╪════════════╪════════╪════════╪═══════════╡
+│ Alice Archer   ┆ 1997-01-10 ┆ 57.9   ┆ 1.56   ┆ 156.0     │
+│ Ben Brown      ┆ 1985-02-15 ┆ 72.5   ┆ 1.77   ┆ 177.0     │
+│ Chloe Cooper   ┆ 1983-03-22 ┆ 53.6   ┆ 1.65   ┆ 165.0     │
+│ Daniel Donovan ┆ 1981-04-30 ┆ 83.1   ┆ 1.75   ┆ 175.0     │
+└────────────────┴────────────┴────────┴────────┴───────────┘
+```
+#### 新增时, 转换类型
+使用case方法: `df.with_columns(height_cm=(pl.col("height") *100).cast(pl.UInt16))`
+```text
+shape: (4, 5)
+┌────────────────┬────────────┬────────┬────────┬───────────┐
+│ name           ┆ birthdate  ┆ weight ┆ height ┆ height_cm │
+│ ---            ┆ ---        ┆ ---    ┆ ---    ┆ ---       │
+│ str            ┆ date       ┆ f64    ┆ f64    ┆ u16       │
+╞════════════════╪════════════╪════════╪════════╪═══════════╡
+│ Alice Archer   ┆ 1997-01-10 ┆ 57.9   ┆ 1.56   ┆ 156       │
+│ Ben Brown      ┆ 1985-02-15 ┆ 72.5   ┆ 1.77   ┆ 177       │
+│ Chloe Cooper   ┆ 1983-03-22 ┆ 53.6   ┆ 1.65   ┆ 165       │
+│ Daniel Donovan ┆ 1981-04-30 ┆ 83.1   ┆ 1.75   ┆ 175       │
+└────────────────┴────────────┴────────┴────────┴───────────┘
+```
+
+#### 使用alias
+
+```python
+df.with_columns(
+    pl.col("name").alias("full_name")
+)
+```
+```text
+shape: (4, 6)
+┌────────────────┬────────────┬────────┬────────┬───────────┬────────────────┐
+│ name           ┆ birthdate  ┆ weight ┆ height ┆ height_cm ┆ full_name      │
+│ ---            ┆ ---        ┆ ---    ┆ ---    ┆ ---       ┆ ---            │
+│ str            ┆ date       ┆ f64    ┆ f64    ┆ u16       ┆ str            │
+╞════════════════╪════════════╪════════╪════════╪═══════════╪════════════════╡
+│ Alice Archer   ┆ 1997-01-10 ┆ 57.9   ┆ 1.56   ┆ 156       ┆ Alice Archer   │
+│ Ben Brown      ┆ 1985-02-15 ┆ 72.5   ┆ 1.77   ┆ 177       ┆ Ben Brown      │
+│ Chloe Cooper   ┆ 1983-03-22 ┆ 53.6   ┆ 1.65   ┆ 165       ┆ Chloe Cooper   │
+│ Daniel Donovan ┆ 1981-04-30 ┆ 83.1   ┆ 1.75   ┆ 175       ┆ Daniel Donovan │
+└────────────────┴────────────┴────────┴────────┴───────────┴────────────────┘
+```
+
+#### 使用标量
+
+`print(df.with_columns(1))`
+```text
+shape: (4, 5)
+┌────────────────┬────────────┬────────┬────────┬─────────┐
+│ name           ┆ birthdate  ┆ weight ┆ height ┆ literal │
+│ ---            ┆ ---        ┆ ---    ┆ ---    ┆ ---     │
+│ str            ┆ date       ┆ f64    ┆ f64    ┆ i32     │
+╞════════════════╪════════════╪════════╪════════╪═════════╡
+│ Alice Archer   ┆ 1997-01-10 ┆ 57.9   ┆ 1.56   ┆ 1       │
+│ Ben Brown      ┆ 1985-02-15 ┆ 72.5   ┆ 1.77   ┆ 1       │
+│ Chloe Cooper   ┆ 1983-03-22 ┆ 53.6   ┆ 1.65   ┆ 1       │
+│ Daniel Donovan ┆ 1981-04-30 ┆ 83.1   ┆ 1.75   ┆ 1       │
+└────────────────┴────────────┴────────┴────────┴─────────┘
+```
+
+`df.with_columns(pl.lit("Male",dtype=pl.String).alias("gender"))`
+
+```text
+shape: (4, 5)
+┌────────────────┬────────────┬────────┬────────┬────────┐
+│ name           ┆ birthdate  ┆ weight ┆ height ┆ gender │
+│ ---            ┆ ---        ┆ ---    ┆ ---    ┆ ---    │
+│ str            ┆ date       ┆ f64    ┆ f64    ┆ str    │
+╞════════════════╪════════════╪════════╪════════╪════════╡
+│ Alice Archer   ┆ 1997-01-10 ┆ 57.9   ┆ 1.56   ┆ Male   │
+│ Ben Brown      ┆ 1985-02-15 ┆ 72.5   ┆ 1.77   ┆ Male   │
+│ Chloe Cooper   ┆ 1983-03-22 ┆ 53.6   ┆ 1.65   ┆ Male   │
+│ Daniel Donovan ┆ 1981-04-30 ┆ 83.1   ┆ 1.75   ┆ Male   │
+└────────────────┴────────────┴────────┴────────┴────────┘
+```
+
+
+
+
+### filter
+filter表达式接受多个布尔表达式, 输出满足条件的**行**
+```python
+result = df.filter(
+    pl.col("birthdate").is_between(date(1982, 12, 31), date(1996, 1, 1)),
+    pl.col("height") > 1.7,
+)
+print(result)
+```
+
+```text
+shape: (1, 4)
+┌───────────┬────────────┬────────┬────────┐
+│ name      ┆ birthdate  ┆ weight ┆ height │
+│ ---       ┆ ---        ┆ ---    ┆ ---    │
+│ str       ┆ date       ┆ f64    ┆ f64    │
+╞═══════════╪════════════╪════════╪════════╡
+│ Ben Brown ┆ 1985-02-15 ┆ 72.5   ┆ 1.77   │
+└───────────┴────────────┴────────┴────────┘
+```
+
+### group_by 和 aggregations
+- group_by根据分组表达式的唯一值对行进行分组. 然后可以将表达式应用于生成的各个分组, 这些组的可能长度是可变的.
+- 可以使用表达式动态计算分组
+- agg函数用于对每个分组进行聚合操作
+
+```python
+# by: 要作为分组依据的列, 接受表达式输入, 字符串被解析为列名
+# 返回值GroupBy可以用于执行聚合操作
+def group_by(
+        self,
+        *by: IntoExpr | Iterable[IntoExpr],
+        maintain_order: bool = False,
+        **named_by: IntoExpr,
+    ) -> GroupBy
+```
+
+```python
+df = pl.DataFrame(
+     {
+         "a": ["a", "b", "a", "b", "c"],
+         "b": [1, 2, 1, 3, 3],
+         "c": [5, 4, 3, 2, 1],
+     }
+ )
+```
+```text
+shape: (5, 3)
+┌─────┬─────┬─────┐
+│ a   ┆ b   ┆ c   │
+│ --- ┆ --- ┆ --- │
+│ str ┆ i64 ┆ i64 │
+╞═════╪═════╪═════╡
+│ a   ┆ 1   ┆ 5   │
+│ b   ┆ 2   ┆ 4   │
+│ a   ┆ 1   ┆ 3   │
+│ b   ┆ 3   ┆ 2   │
+│ c   ┆ 3   ┆ 1   │
+└─────┴─────┴─────┘
+```
+
+`df.group_by("a").agg(pl.col("b").sum())`
+
+按照a列分为3组, 然后分别对每组的b列求和, 以下是示意
+
+| a | b |
+|---|---|
+| a | 1 |
+| a | 1 |
+
+| a | b |
+|---|---|
+| b | 2 |
+| b | 3 |
+
+| a | b |
+|---|---|
+| c | 3 |
+
+```text
+shape: (3, 2)
+┌─────┬─────┐
+│ a   ┆ b   │
+│ --- ┆ --- │
+│ str ┆ i64 │
+╞═════╪═════╡
+│ c   ┆ 3   │
+│ b   ┆ 5   │
+│ a   ┆ 2   │
+└─────┴─────┘
+```
+#### 示例
+`df.group_by("a", maintain_order=True).agg(pl.col("c"))`
+
+对a这一列分组, 然后对c这一列聚合(pl.col("c")返回一个列, 所以下面可以看到收集为一个列表了)
+`maintain_order=True`表示按照按照输入顺序进行排序
+
+```text
+shape: (3, 2)
+┌─────┬───────────┐
+│ a   ┆ c         │
+│ --- ┆ ---       │
+│ str ┆ list[i64] │
+╞═════╪═══════════╡
+│ a   ┆ [5, 3]    │
+│ b   ┆ [4, 2]    │
+│ c   ┆ [1]       │
+└─────┴───────────┘
+```
+
+#### 示例
+使用agg方法进行聚合
+```python
+import polars as pl
+
+df = pl.DataFrame({
+    "team": ["A", "A", "B", "B", "B"],
+    "score": [10, 20, 7, 14, 21]
+})
+
+result = df.group_by("team").agg([
+    pl.col("score").sum().alias("total_score"),
+    pl.col("score").mean().alias("avg_score")
+])
+
+print(result)
+
+```
+按照team分为2组, 然后对score列进行求和和求均值, 拼接到一个DataFrame中
+
+```text
+shape: (2, 3)
+┌──────┬─────────────┬───────────┐
+│ team ┆ total_score ┆ avg_score │
+│ ---  ┆ ---         ┆ ---       │
+│ str  ┆ i64         ┆ f64       │
+╞══════╪═════════════╪═══════════╡
+│ B    ┆ 42          ┆ 14.0      │
+│ A    ┆ 30          ┆ 15.0      │
+└──────┴─────────────┴───────────┘
+```
+#### 示例
+`df.group_by("team").agg(pl.max("score").alias("max_score"))`
+
+按照team分为2组, 然后对score列进行求最大值, 拼接到一个DataFrame中
+```text
+shape: (2, 2)
+┌──────┬───────────┐
+│ team ┆ max_score │
+│ ---  ┆ ---       │
+│ str  ┆ i64       │
+╞══════╪═══════════╡
+│ A    ┆ 20        │
+│ B    ┆ 21        │
+└──────┴───────────┘
+```
+
+## 表达式扩展
+### 列名增加前缀
+给每一列增加前缀, 高亮部分是等价的
+```python {8,9-12}
+import polars as pl
+
+df = pl.DataFrame({
+    "team": ["A", "A", "B", "B", "B"],
+    "score": [10, 20, 7, 14, 21]
+})
+
+df.select(pl.col("team","score").name.prefix("polars_"))
+df.select([
+    pl.col("team").name.prefix("polars_"),
+    pl.col("score").name.prefix("polars_")
+])
+```
+
+```text
+shape: (5, 2)
+┌─────────────┬──────────────┐
+│ polars_team ┆ polars_score │
+│ ---         ┆ ---          │
+│ str         ┆ i64          │
+╞═════════════╪══════════════╡
+│ A           ┆ 10           │
+│ A           ┆ 20           │
+│ B           ┆ 7            │
+│ B           ┆ 14           │
+│ B           ┆ 21           │
+└─────────────┴──────────────┘
+```
+
+### 根据列的类型进行计算
+- 高亮的第11行选择所有数据类型是int64的列, 乘以10, 可以观察下面的输出结果
+- 这里可以注意下第10行, 我们使用了通配选择符选择了所有列用于展示对比
+```python {11}
+import polars as pl
+
+df = pl.DataFrame({
+    "team": ["A", "A", "B", "B", "B"],
+    "score1": [10, 20, 7, 14, 21],
+    "score2": [20, 18, 7, 15, 32],
+})
+
+print(df.select(
+    pl.col("*"),
+    (pl.col(pl.Int64) * 10).name.suffix("*10")
+))
+```
+
+```text
+shape: (5, 5)
+┌──────┬────────┬────────┬───────────┬───────────┐
+│ team ┆ score1 ┆ score2 ┆ score1*10 ┆ score2*10 │
+│ ---  ┆ ---    ┆ ---    ┆ ---       ┆ ---       │
+│ str  ┆ i64    ┆ i64    ┆ i64       ┆ i64       │
+╞══════╪════════╪════════╪═══════════╪═══════════╡
+│ A    ┆ 10     ┆ 20     ┆ 100       ┆ 200       │
+│ A    ┆ 20     ┆ 18     ┆ 200       ┆ 180       │
+│ B    ┆ 7      ┆ 7      ┆ 70        ┆ 70        │
+│ B    ┆ 14     ┆ 15     ┆ 140       ┆ 150       │
+│ B    ┆ 21     ┆ 32     ┆ 210       ┆ 320       │
+└──────┴────────┴────────┴───────────┴───────────┘
+```
+
+
+## 其他
+
+下面了解惰性API和更多表达式的用法

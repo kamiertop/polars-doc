@@ -6,11 +6,14 @@ export default function Link({description, href}) {
             style={{
                 color: "#0070f3",
                 fontWeight: "600",
-                textDecoration: "underline",
+                // textDecoration: "underline",
                 cursor: "pointer",
                 display: "inline-flex",
                 alignItems: "center",
-                gap:"4px"
+                gap: "4px",
+                border: "1px solid black",
+                padding: "15px 8px",
+                borderRadius: "4px"
             }}
         >
             {description}
