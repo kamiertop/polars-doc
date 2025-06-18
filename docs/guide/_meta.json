@@ -13,6 +13,11 @@
     "type": "dir",
     "name": "concepts",
     "label": "一些概念"
+  },
+  {
+    "type": "dir",
+    "name": "expressions",
+    "label": "表达式"
   }
 ]
 

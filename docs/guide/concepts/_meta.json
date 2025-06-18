@@ -8,5 +8,10 @@
     "type": "file",
     "name": "expression_context",
     "label": "表达式和上下文"
+  },
+  {
+    "type": "file",
+    "name": "lazy_api",
+    "label": "Lazy API"
   }
 ]

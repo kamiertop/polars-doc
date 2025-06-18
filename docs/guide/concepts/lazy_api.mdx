@@ -1,0 +1,65 @@
+# 惰性API
+
+Polars支持两种操作模式: `lazy` 和 `eager`, 之前的示例都使用了 `eager`, 查询会立即执行
+在Lazy模式中, 查询仅用来收集, 将执行推迟到最后执行
+
+- `eager`模式的每个步骤都会立即执行, 返回中间结果
+- `lazy`模式会收集所有查询步骤, 查询优化器可以执行各种优化, 会显著降低内存和CPU的负载, 从而允许在内存中容纳更大的数据集
+
+:::note
+
+- 很多情况下, `eager`实际上实在后台调用`lazy`并立即收集结果
+- 一般来说, `lazy`模式是首选的, 除非对中间结果感兴趣, 或者在做探索性工作
+
+:::
+
+## 预览查询计划
+
+使用`lazy`api时可以使用函数explain要求`Polars`创建查询计划的描述, 该描述将在收集结果后执行.
+
+## 使用`lazy`模式
+:::tip
+
+- 以下只是简单示例如何使用, 具体是否使用`lazy`模式取决于数据集大小和查询
+- 数据集小时, 使用`eager`模式可能会更快, 因为生成查询计划需要时间
+
+:::
+
+可以使用`lazy()`方法将DataFrame转换为LazyDataFrame.
+
+最后使用`collect()`收集所有查询步骤并返回结果
+
+```python
+import polars as pl
+
+df: pl.DataFrame = pl.DataFrame({
+    "name": ["Alice", "Bob", "Charlie", "David"],
+    "age": [25, 35, 30, 40],
+    "city": ["NY", "LA", "NY", "SF"]
+})
+
+lazy_df: pl.LazyFrame = df.lazy()
+
+query = (
+    lazy_df
+    .filter(pl.col("age") > 30)
+    .select(pl.col("name"),pl.col("age"))
+)
+print(query.explain())
+print(query.collect())
+```
+
+```text
+FILTER [(col("age")) > (30)]
+FROM
+  DF ["name", "age", "city"]; PROJECT["name", "age"] 2/3 COLUMNS
+shape: (2, 2)
+┌───────┬─────┐
+│ name  ┆ age │
+│ ---   ┆ --- │
+│ str   ┆ i64 │
+╞═══════╪═════╡
+│ Bob   ┆ 35  │
+│ David ┆ 40  │
+└───────┴─────┘
+```
