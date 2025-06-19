@@ -1,3 +1,100 @@
 # 基本操作
 
-这一节展示如何在`DataFrame columns`上做一些基本操作, 比如
+这一节展示如何在`DataFrame columns`上做一些基本操作, 比如基本的算数运算, 执行比较和其他通用操作
+
+## 数据准备
+
+
+``` python
+import polars as pl
+import numpy as np
+
+np.random.seed(42)  # For reproducibility.
+
+df = pl.DataFrame(
+    {
+        "nrs": [1, 2, 3, None, 5],
+        "names": ["foo", "ham", "spam", "egg", "spam"],
+        "random": np.random.rand(5),
+        "groups": ["A", "A", "B", "A", "B"],
+    }
+)
+print(df)
+```
+
+```text
+shape: (5, 4)
+┌──────┬───────┬──────────┬────────┐
+│ nrs  ┆ names ┆ random   ┆ groups │
+│ ---  ┆ ---   ┆ ---      ┆ ---    │
+│ i64  ┆ str   ┆ f64      ┆ str    │
+╞══════╪═══════╪══════════╪════════╡
+│ 1    ┆ foo   ┆ 0.37454  ┆ A      │
+│ 2    ┆ ham   ┆ 0.950714 ┆ A      │
+│ 3    ┆ spam  ┆ 0.731994 ┆ B      │
+│ null ┆ egg   ┆ 0.598658 ┆ A      │
+│ 5    ┆ spam  ┆ 0.156019 ┆ B      │
+└──────┴───────┴──────────┴────────┘
+```
+
+## 基本算数
+
+- Polars支持相同长度的Series之间或Series和Literals之间的基本运算.
+- 当两者混合时, 将广播Literals已匹配它们正在使用的Series的长度.
+    - `pl.col("nrs")+5` : 会将nrs这一列中的每一个值都+5
+    - `pl.col("nrs)/pl.col("random")` : 会将nrs这一列中的每一个值都除以random列中的值
+
+```python
+result = df.select(
+    (pl.col("nrs") + 5).alias("nrs + 5"),
+    (pl.col("nrs") - 5).alias("nrs - 5"),
+    (pl.col("nrs") * pl.col("random")).alias("nrs * random"),
+    (pl.col("nrs") / pl.col("random")).alias("nrs / random"),
+    (pl.col("nrs") ** 2).alias("nrs ** 2"),
+    (pl.col("nrs") % 3).alias("nrs % 3"),
+)
+
+print(result)
+```
+
+```text {10}
+shape: (5, 6)
+┌─────────┬─────────┬──────────────┬──────────────┬──────────┬─────────┐
+│ nrs + 5 ┆ nrs - 5 ┆ nrs * random ┆ nrs / random ┆ nrs ** 2 ┆ nrs % 3 │
+│ ---     ┆ ---     ┆ ---          ┆ ---          ┆ ---      ┆ ---     │
+│ i64     ┆ i64     ┆ f64          ┆ f64          ┆ i64      ┆ i64     │
+╞═════════╪═════════╪══════════════╪══════════════╪══════════╪═════════╡
+│ 6       ┆ -4      ┆ 0.37454      ┆ 2.669941     ┆ 1        ┆ 1       │
+│ 7       ┆ -3      ┆ 1.901429     ┆ 2.103681     ┆ 4        ┆ 2       │
+│ 8       ┆ -2      ┆ 2.195982     ┆ 4.098395     ┆ 9        ┆ 0       │
+│ null    ┆ null    ┆ null         ┆ null         ┆ null     ┆ null    │
+│ 10      ┆ 0       ┆ 0.780093     ┆ 32.047453    ┆ 25       ┆ 2       │
+└─────────┴─────────┴──────────────┴──────────────┴──────────┴─────────┘
+```
+
+:::tip
+上面结果中高亮的那一行显示, 当算术运算中将 `null`作为其操作数之一的时候, 结果为 `null`
+:::
+
+- Polars使用运算符重载允许在表达式中使用语言的原生算数运算符
+- 当然也可以使用相应的命名函数
+    - `.add()`
+    - `.sub()`
+    - `.mul()`
+    - `.truediv()`
+    - `.pow()`
+    - `.mod()`
+
+```python
+# Python only:
+result_named_operators = df.select(
+    (pl.col("nrs").add(5)).alias("nrs + 5"),
+    (pl.col("nrs").sub(5)).alias("nrs - 5"),
+    (pl.col("nrs").mul(pl.col("random"))).alias("nrs * random"),
+    (pl.col("nrs").truediv(pl.col("random"))).alias("nrs / random"),
+    (pl.col("nrs").pow(2)).alias("nrs ** 2"),
+    (pl.col("nrs").mod(3)).alias("nrs % 3"),
+)
+
+print(result.equals(result_named_operators))
+```
