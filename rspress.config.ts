@@ -1,5 +1,5 @@
 import * as path from 'node:path';
-import { defineConfig } from 'rspress/config';
+import {defineConfig} from 'rspress/config';
 
 export default defineConfig({
   root: path.join(__dirname, 'docs'),
@@ -19,18 +19,21 @@ export default defineConfig({
         content: 'https://github.com/kamiertop/polars-doc',
       }
     ],
+    // 导航栏显示设置
+    hideNavbar: 'auto',
     outlineTitle: '目录',
     prevPageText: '上一页',
     nextPageText: '下一页',
     enableContentAnimation: true,
+    enableScrollToTop: true,
     enableAppearanceAnimation: true,
     outline: true,
     lastUpdated: true,
     lastUpdatedText: "上次更新时间",
-    // editLink: {
-    //   text:"📝在 GitHub 上编辑此页",
-    //   docRepoBaseUrl: "https://github.com/kamiertop/polars-doc",
-    // },
+    editLink: {
+      text:"📝在 GitHub 上编辑此页",
+      docRepoBaseUrl: "https://github.com/kamiertop/polars-doc/tree/main/docs",
+    },
   },
   search: {
     codeBlocks: true,

@@ -17,7 +17,8 @@
   {
     "type": "dir",
     "name": "expressions",
-    "label": "表达式"
+    "label": "表达式",
+    "collapsed": false
   }
 ]
 

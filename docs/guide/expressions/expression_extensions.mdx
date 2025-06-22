@@ -355,6 +355,8 @@ shape: (4, 2)
 
 
 
+
+
 import {Tab, Tabs} from 'rspress/theme';
 import {LinkCard} from '@theme';
 
@@ -534,7 +536,8 @@ shape: (4, 2)
 `~`符号针对布尔表达式含义是取反, 针对选择器是取补集, 为了解决歧义, 可以使用方法: `as_expr`, 看下面官方代码
 
 我们想把所有以"has"开头的列的值取反, 但结果是选择了所有不以"has"开头的列
-```python
+
+```python {13}
 import polars as pl
 import polars.selectors as cs
 people = pl.DataFrame(
@@ -563,7 +566,8 @@ shape: (2, 2)
 └──────┴──────────┘
 ```
 
-正确的写法是使用`as_expr`方法, `as_expr`方法将选择器转换为表达式, 然后取反, 看下面代码
+正确的写法是使用`as_expr()`方法, `as_expr`方法将选择器转换为表达式, 然后取反, 我们看下面代码
+
 ```python
 res = people.select((~cs.starts_with("has_").as_expr()))
 print(res)
