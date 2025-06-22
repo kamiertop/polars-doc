@@ -5,7 +5,7 @@
 Install the dependencies:
 
 ```bash
-npm install
+pnpm install
 ```
 
 ## Get started
@@ -13,7 +13,7 @@ npm install
 Start the dev server:
 
 ```bash
-npm run dev
+pnpm dev
 ```
 
 Build the website for production:

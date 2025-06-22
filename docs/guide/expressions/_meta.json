@@ -3,5 +3,10 @@
     "type": "file",
     "name": "basic_operations.mdx",
     "label": "基本操作"
+  },
+  {
+    "type": "file",
+    "name": "expression_extensions.mdx",
+    "label": "表达式扩展"
   }
 ]
