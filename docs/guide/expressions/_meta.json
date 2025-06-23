@@ -12,7 +12,7 @@
   {
     "type": "file",
     "name": "casting.mdx",
-    "label": "类型转换"
+    "label": "强制类型转换"
   },
   {
     "type": "file",
