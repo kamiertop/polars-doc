@@ -1,7 +1,22 @@
 [
   {
+    "text": "官方文档",
+    "link": "https://pola.rs",
+    "activeMatch": "/official"
+  },
+  {
     "text": "指南",
     "link": "/guide/",
     "activeMatch": "/guide/"
+  },
+  {
+    "text": "API",
+    "link": "https://docs.pola.rs/api/python/stable/reference/index.html",
+    "activeMatch": "/api/"
+  },
+  {
+    "text": "说明",
+    "link": "info",
+    "activeMatch": "/info/"
   }
 ]
