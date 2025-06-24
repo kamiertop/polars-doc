@@ -12,11 +12,11 @@
   {
     "text": "API",
     "link": "https://docs.pola.rs/api/python/stable/reference/index.html",
-    "activeMatch": "/api/"
+    "activeMatch": "/api"
   },
   {
     "text": "说明",
     "link": "info",
-    "activeMatch": "/info/"
+    "activeMatch": "/info"
   }
 ]

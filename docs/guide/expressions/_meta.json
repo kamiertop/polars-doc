@@ -23,5 +23,30 @@
     "type": "file",
     "name": "list_array.mdx",
     "label": "列表和数组"
+  },
+  {
+    "type": "file",
+    "name": "list_array.mdx",
+    "label": "分类数据和枚举"
+  },
+  {
+    "type": "file",
+    "name": "struct.mdx",
+    "label": "结构体"
+  },
+  {
+    "type": "file",
+    "name": "missing_data.mdx",
+    "label": "缺失数据"
+  },
+  {
+    "type": "file",
+    "name": "missing_data.mdx",
+    "label": "聚合"
+  },
+  {
+    "type": "file",
+    "name": "window_function.mdx",
+    "label": "窗口函数"
   }
 ]
