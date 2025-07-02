@@ -19,6 +19,21 @@
     "name": "expressions",
     "label": "表达式",
     "collapsed": false
+  },
+  {
+    "type": "dir",
+    "name": "transformations",
+    "label": "变换"
+  },
+  {
+    "type": "dir",
+    "name": "LazyAPI",
+    "label": "惰性API"
+  },
+  {
+    "type": "dir",
+    "name": "IO",
+    "label": "输入输出"
   }
 ]
 
