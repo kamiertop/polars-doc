@@ -23,7 +23,8 @@
   {
     "type": "dir",
     "name": "transformations",
-    "label": "变换"
+    "label": "变换",
+    "collapsed": true
   },
   {
     "type": "dir",
