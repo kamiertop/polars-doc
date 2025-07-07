@@ -1,8 +1,9 @@
-import * as path from 'node:path';
+// import * as path from 'node:path';
 import {defineConfig} from 'rspress/config';
 
 export default defineConfig({
-  root: path.join(__dirname, 'docs'),
+  root: 'docs',
+  // root: path.join(__dirname, 'docs'),
   title: 'Polars中文指南',
   description:"polars-python中文指南",
   icon: './docs/public/polars.svg',
@@ -10,6 +11,9 @@ export default defineConfig({
   logo: {
     light: '/polars.svg',
     dark: '/polars.svg',
+  },
+  route: {
+    cleanUrls: true,
   },
   themeConfig: {
     socialLinks: [

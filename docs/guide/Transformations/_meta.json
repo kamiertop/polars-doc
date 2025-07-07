@@ -18,5 +18,10 @@
     "type": "file",
     "name": "unpivot.mdx",
     "label": "逆透视"
+  },
+  {
+    "type": "dir",
+    "name": "date_series",
+    "label": "时间序列"
   }
 ]

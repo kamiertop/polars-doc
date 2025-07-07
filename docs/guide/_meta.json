@@ -12,7 +12,8 @@
   {
     "type": "dir",
     "name": "concepts",
-    "label": "一些概念"
+    "label": "一些概念",
+    "collapsed": true
   },
   {
     "type": "dir",
@@ -22,7 +23,7 @@
   },
   {
     "type": "dir",
-    "name": "transformations",
+    "name": "Transformations",
     "label": "变换",
     "collapsed": true
   },
