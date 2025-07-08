@@ -8,5 +8,10 @@
     "type": "file",
     "name": "filter.mdx",
     "label": "过滤"
+  },
+  {
+    "type": "file",
+    "name": "group.mdx",
+    "label": "分组"
   }
 ]
