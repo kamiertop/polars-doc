@@ -30,12 +30,14 @@
   {
     "type": "dir",
     "name": "LazyAPI",
-    "label": "惰性API"
+    "label": "惰性API",
+    "collapsed": true
   },
   {
     "type": "dir",
     "name": "IO",
-    "label": "输入输出"
+    "label": "输入输出",
+    "collapsed": true
   }
 ]
 
