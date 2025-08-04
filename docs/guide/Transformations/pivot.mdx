@@ -2,7 +2,12 @@
 
 `pivot`函数的作用是透视表转换, 把某一列的列值, **转换为列名**, 然后取其它的列, 聚合成新的单元格, 变成一个**宽表**
 
-我们先准备一个数据, 记录某些月份某些水果的销量
+## 及时模式
+我们通过几个例子来学习一下什么是`pivot`
+### Example1
+
+在下面代码中我们想得到不同产品每个月的销量
+
 ```python
 import polars as pl
 
@@ -13,7 +18,16 @@ df = pl.DataFrame({
 })
 
 print(df)
+res = df.pivot("product",index="month",values="sales")
+print(res)
 ```
+通过第二个表格可以看到, `product`列的值转换为了列名, `sales`列的值转换为了列值, 此时我们就可以统计每个产品的一些数据了, 这就是`pivot`的作用.
+
+为了更清晰地表达, 可以看下面的图
+
+![](/pivot.png)
+
+
 ```text
 shape: (4, 3)
 ┌───────┬─────────┬───────┐
@@ -26,17 +40,6 @@ shape: (4, 3)
 │ Feb   ┆ apple   ┆ 150   │
 │ Feb   ┆ banana  ┆ 250   │
 └───────┴─────────┴───────┘
-```
-## 及时模式
-
-我们想得到不同产品每个月的销量
-
-```python
-res = df.pivot("product",index="month",values="sales")
-print(res)
-```
-通过结果可以看到, `product`列的值转换为了列名, `sales`列的值转换为了列值, 此时我们就可以统计每个产品的一些数据了, 这就是`pivot`的作用
-```text
 shape: (2, 3)
 ┌───────┬───────┬────────┐
 │ month ┆ apple ┆ banana │
@@ -47,6 +50,51 @@ shape: (2, 3)
 │ Feb   ┆ 150   ┆ 250    │
 └───────┴───────┴────────┘
 ```
+
+### Example2
+
+{/* MDX解析器会自动把大写的id转换为小写, 所以下面需要使用小写的example1 */}
+[Example1](#example1)中的例子正好是2个月份, 每个月份都有apple/banana, 如果不是这种情况呢, 我们来看下面的代码
+
+```python
+import polars as pl
+
+df = pl.DataFrame({
+    "month": ["Jan","Jan","May", "Feb", "Feb"],
+    "product": ["apple","peach","banana", "apple", "banana"],
+    "sales": [100, 200, 400,150, 250]
+})
+
+print(df)
+res = df.pivot("product",index="month",values="sales")
+print(res)
+```
+可以看下面的结果, 第二个表中缺失的值使用`null`进行填充
+```text
+shape: (5, 3)
+┌───────┬─────────┬───────┐
+│ month ┆ product ┆ sales │
+│ ---   ┆ ---     ┆ ---   │
+│ str   ┆ str     ┆ i64   │
+╞═══════╪═════════╪═══════╡
+│ Jan   ┆ apple   ┆ 100   │
+│ Jan   ┆ peach   ┆ 200   │
+│ May   ┆ banana  ┆ 400   │
+│ Feb   ┆ apple   ┆ 150   │
+│ Feb   ┆ banana  ┆ 250   │
+└───────┴─────────┴───────┘
+shape: (3, 4)
+┌───────┬───────┬───────┬────────┐
+│ month ┆ apple ┆ peach ┆ banana │
+│ ---   ┆ ---   ┆ ---   ┆ ---    │
+│ str   ┆ i64   ┆ i64   ┆ i64    │
+╞═══════╪═══════╪═══════╪════════╡
+│ Jan   ┆ 100   ┆ 200   ┆ null   │
+│ May   ┆ null  ┆ null  ┆ 400    │
+│ Feb   ┆ 150   ┆ null  ┆ 250    │
+└───────┴───────┴───────┴────────┘
+```
+
 
 ### 聚合参数
 上面的例子略显简单, 因为每个月份都只有一个apple/banana, 那如果有多个呢, 不可能变成多个apple列和多个banana列, 此时可以指定怎么选择
@@ -61,7 +109,7 @@ Polars提供了以下几种聚合方式:
 - median
 - len
 
-我们把刚才的数据扩充下然后使用`sum`来说明如何使用
+我们使用`sum`来说明如何使用
 
 ```python
 import polars as pl
